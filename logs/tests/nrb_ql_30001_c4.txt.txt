@@ -1,0 +1,20 @@
+CONNECT4 TRAINING WITH Q-LEARNING -- TESTING
+Version: 1.0 
+CONNECT4 environment: PettingZoo 1.24.2
+Number of games played: 3
+======================================================================
+CONFIGURATION:
+Player 0 filename: nr_ql_30001_p0.json
+Player 1 filename: nr_ql_30001_p1.json
+Player 0 roulette_wheel: True
+Player 1 roulette_wheel: False
+Render mode: human
+======================================================================
+RESULTS:
+
+Number of games won by player0: 2
+Number of games won by player1: 1
+Number of coins flipped: 1
+======================================================================
+END FILE
+======================================================================
