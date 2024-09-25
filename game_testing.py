@@ -14,6 +14,8 @@ class GameTesting(Game):
         """
         super().__init__(render_mode=render_mode, environment=environment)
         self.player0 = player0
+        self.original_p0 = player0
+        self.original_p1 = player1
         self.player1 = player1
         self.coins_flipped = 0
         self.p0_wins = 0
@@ -64,4 +66,16 @@ class GameTesting(Game):
                                                       observation['action_mask'],
                                                       state_key)
                 self.env.step(action)
+
+    def changing_back_orders(self):
+        # changing back the orders
+        if self.original_p0 == self.player1:
+            # changing it back
+            temp = self.player1
+            self.player1 = self.player0
+            self.player0 = temp
+
+            temp = self.p0_wins
+            self.p0_wins = self.p1_wins
+            self.p1_wins = temp
 

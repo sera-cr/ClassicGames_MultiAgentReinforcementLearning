@@ -8,9 +8,9 @@ from pettingzoo.classic import tictactoe_v3
 
 
 class Training:
-    def __init__(self, alpha: float, gamma: float, epsilon: float, algorithm_player0: int, roulette_wheel_p0: bool,
-                 algorithm_player1: int, roulette_wheel_p1: bool, max_episodes: int, render_mode: str = 'rgb_array',
-                 selected_game: int = 0, training_filename: str = 'training_log'):
+    def __init__(self, alpha: float, gamma: float, epsilon: float, algorithm: int, roulette_wheel: bool,
+                 coinflip_enabled: bool, max_episodes: int, render_mode: str = 'rgb_array', selected_game: int = 0,
+                 training_filename: str = 'training_log'):
         # Hyperparameters
         self.alpha = alpha
         self.gamma = gamma
@@ -19,10 +19,9 @@ class Training:
         # Training options
         self.max_episodes = max_episodes
         self.render_mode = render_mode
-        self.algorithm_player0 = algorithm_player0
-        self.algorithm_player1 = algorithm_player1
-        self.roulette_wheel_p0 = roulette_wheel_p0
-        self.roulette_wheel_p1 = roulette_wheel_p1
+        self.training_algorithm = algorithm
+        self.roulette_wheel = roulette_wheel
+        self.coinflip = coinflip_enabled
         self.training_filename = training_filename
 
         # Training Environment
@@ -36,11 +35,11 @@ class Training:
 
         # Game
         self.player0 = PlayerTraining(alpha=self.alpha, gamma=self.gamma, epsilon=self.epsilon,
-                                      algorithm=algorithm_player0, n_actions=self.n_actions,
-                                      roulette_wheel=self.roulette_wheel_p0)
+                                      algorithm=self.training_algorithm, n_actions=self.n_actions,
+                                      roulette_wheel=self.roulette_wheel)
         self.player1 = PlayerTraining(alpha=self.alpha, gamma=self.gamma, epsilon=self.epsilon,
-                                      algorithm=algorithm_player1, n_actions=self.n_actions,
-                                      roulette_wheel=self.roulette_wheel_p1)
+                                      algorithm=self.training_algorithm, n_actions=self.n_actions,
+                                      roulette_wheel=self.roulette_wheel)
         self.game = GameTraining(render_mode=self.render_mode, environment=environment, player0=self.player0,
                                  player1=self.player1)
 
@@ -54,7 +53,8 @@ class Training:
         for i in range(1, self.max_episodes):
             episode_start_time = time.time()
             self.game.reset()
-            self.game.choose_starting_player()
+            if self.coinflip:
+                self.game.choose_starting_player()
             self.game.play_game()
 
             if i % 100 == 0:
@@ -75,13 +75,11 @@ class Training:
         table1 = self.player1.get_qtable()
 
         log_path = 'tictactoe' if self.selected_game == 0 else 'connect4'
-        roulette = 'r' if self.roulette_wheel_p0 else 'nr'
-        algorithm = 'ql' if self.algorithm_player0 == 0 else 'sarsa'
 
-        filename0 = f'./models/{log_path}/{roulette}_{algorithm}_{self.max_episodes}_p0.json'
+        filename0 = f'./models/{log_path}/{self.training_filename}_{self.max_episodes}_p0.json'
         with open(filename0, 'w') as outfile:
             json.dump(table0, outfile)
-        filename1 = f'./models/{log_path}/{roulette}_{algorithm}_{self.max_episodes}_p1.json'
+        filename1 = f'./models/{log_path}/{self.training_filename}_{self.max_episodes}_p1.json'
         with open(filename1, 'w') as outfile:
             json.dump(table1, outfile)
 
@@ -100,10 +98,8 @@ class Training:
         training_log.write(f'Epsilon: {self.epsilon}\n')
         training_log.write('\n')
         training_log.write('CONFIGURATION:\n')
-        training_log.write(f'Player 0 training algorithm: {"Q-Learning" if self.algorithm_player0 == 0 else "SARSA"}\n')
-        training_log.write(f'Player 1 training algorithm: {"Q-Learning" if self.algorithm_player1 == 0 else "SARSA"}\n')
-        training_log.write(f'Player 0 roulette_wheel: {self.roulette_wheel_p0}\n')
-        training_log.write(f'Player 1 roulette_wheel: {self.roulette_wheel_p1}\n')
+        training_log.write(f'Training algorithm: {"Q-Learning" if self.training_algorithm == 0 else "SARSA"}\n')
+        training_log.write(f'Roulette_wheel: {self.roulette_wheel}\n')
         training_log.write(f'Max episodes: {self.max_episodes}\n')
         training_log.write(f'Render mode: {self.render_mode}\n')
         training_log.write('RESULTS:\n')
@@ -135,35 +131,45 @@ class Training:
 if __name__ == '__main__':
     learning_rate = 0.3
     discount_factor = 0.6
-    random_exploration = 0.3
+    random_exploration = 0.7
 
     # Configuration
     # rgb_array -> no visualization
     # human -> 2D game
     render_mode_training = 'rgb_array'
     m_episodes = 30001
-    roulette_wheel_p0_training = False
-    roulette_wheel_p1_training = False
+    roulette_wheel_algorithm = False
+    coinflip = True
 
     # Training algorithm
     # 0 -> Q-Learning, Bellman equation
     # 1 -> SARSA
-    a_player0 = 0
-    a_player1 = 0
+    training_algorithm = 1
 
     # Training game
     # 0 -> TicTacToe
     # 1 -> Connect4
     game = 1
 
-    # Logs filename
-    filename = 'ql_nr_both'
+    # Logs
+    # filename translations:
+    # ql -> QLearning
+    # sa -> SARSA
+    # nr -> No roulette wheel
+    # r -> Roulette wheel
+    # a -> learning rate or alpha
+    # g -> discount factor or gamma
+    # e -> random exploration or epsilon
+    # d -> "dot" i.e: d5 = 0.5
+    # Number of episodes is NEVER added to the filename
+    filename = (f'{"ql" if training_algorithm == 0 else "sa"}_{"r" if roulette_wheel_algorithm else "nr"}'
+                f'_ad{str(learning_rate).split(".")[1][:2]}_gd{str(discount_factor).split(".")[1][:2]}_ed'
+                f'{str(random_exploration).split(".")[1][:2]}')
 
     # Creating training class
     training = Training(alpha=learning_rate, gamma=discount_factor, epsilon=random_exploration,
-                        algorithm_player0=a_player0, roulette_wheel_p0=roulette_wheel_p0_training,
-                        algorithm_player1=a_player1, roulette_wheel_p1=roulette_wheel_p1_training,
-                        render_mode=render_mode_training, max_episodes=m_episodes, selected_game=game,
-                        training_filename=filename)
+                        algorithm=training_algorithm, roulette_wheel=roulette_wheel_algorithm,
+                        coinflip_enabled=coinflip, render_mode=render_mode_training, max_episodes=m_episodes,
+                        selected_game=game, training_filename=filename)
 
     training.training()

@@ -1,0 +1,21 @@
+TICTACTOE TRAINING WITH Q-LEARNING -- TESTING
+Version: 1.0 
+TICTACTOE environment: PettingZoo 1.24.2
+Number of games played: 5000
+======================================================================
+CONFIGURATION:
+Player 0 filename: sa_nr_ad3_gd6_ed3_30001_p0.json
+Player 1 filename: sa_r_ad3_gd6_ed3_30001_p1.json
+Player 0 roulette_wheel: True
+Player 1 roulette_wheel: True
+Coinflip enabled: True
+Render mode: rgb_array
+======================================================================
+RESULTS:
+
+Number of games won by player0: 2179
+Number of games won by player1: 2133
+Number of coins flipped: 2451
+======================================================================
+END FILE
+======================================================================

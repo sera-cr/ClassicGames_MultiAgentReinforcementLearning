@@ -8,7 +8,7 @@ from pettingzoo.classic import tictactoe_v3
 class Testing:
     def __init__(self, number_games: int, roulette_wheel_p0: bool, roulette_wheel_p1: bool, player0_model_filename: str,
                  player1_model_filename: str, s_game: int = 0, render_mode: str = 'rgb_array',
-                 testing_filename: str = 'testing_log'):
+                 testing_filename: str = 'testing_log', coinflip: bool = True):
         # Testing options
         self.n_games = number_games
         self.render_mode = render_mode
@@ -18,6 +18,7 @@ class Testing:
         self.selected_game = s_game
         self.p0_model_name = player0_model_filename
         self.p1_model_name = player1_model_filename
+        self.coinflip = coinflip
 
         if self.selected_game == 0:
             environment = tictactoe_v3.env(render_mode=self.render_mode)
@@ -38,9 +39,11 @@ class Testing:
     def testing(self):
         for i in range(0, self.n_games):
             self.game.reset()
-            self.game.choose_starting_player()
+            if self.coinflip:
+                self.game.choose_starting_player()
             self.game.play_game()
 
+        self.game.changing_back_orders()
         self.write_testing_log()
         print('Testing finished.')
 
@@ -67,13 +70,15 @@ class Testing:
         testing_log.write(f'Player 1 filename: {self.p1_model_name}\n')
         testing_log.write(f'Player 0 roulette_wheel: {self.roulette_wheel_p0}\n')
         testing_log.write(f'Player 1 roulette_wheel: {self.roulette_wheel_p1}\n')
+        testing_log.write(f'Coinflip enabled: {self.coinflip}\n')
         testing_log.write(f'Render mode: {self.render_mode}\n')
         testing_log.write('=' * 70 + '\n')
         testing_log.write('RESULTS:\n')
         testing_log.write('\n')
         testing_log.write(f'Number of games won by player0: {self.game.p0_wins}\n')
         testing_log.write(f'Number of games won by player1: {self.game.p1_wins}\n')
-        testing_log.write(f'Number of coins flipped: {self.game.coins_flipped}\n')
+        if self.coinflip:
+            testing_log.write(f'Number of coins flipped: {self.game.coins_flipped}\n')
         testing_log.write('=' * 70 + '\n')
         testing_log.write('END FILE\n')
         testing_log.write('=' * 70 + '\n')
@@ -81,9 +86,9 @@ class Testing:
 
 
 if __name__ == '__main__':
-    n_games = 3
+    n_games = 1000
     roulette_wheel_p0_testing = True
-    roulette_wheel_p1_testing = False
+    roulette_wheel_p1_testing = True
     render_mode_testing = 'human'
 
     # Selected game
@@ -91,13 +96,27 @@ if __name__ == '__main__':
     # 1 -> Connect4
     selected_game = 1
 
-    filename0 = 'nr_ql_30001_p0.json'
-    filename1 = 'nr_ql_30001_p1.json'
+    # Enable coinflip?
+    enabled_coinflip = True
 
-    test_file = f'nrb_ql_30001_{"ttt" if selected_game == 0 else "c4"}'
+    filename0 = 'ql_nr_ad3_gd6_ed3_200001_p1.json'
+    filename1 = 'sa_nr_ad3_gd6_ed3_200001_p0.json'
+
+    # Filename convention:
+    # ql -> QLearning
+    # sa -> SARSA
+    # nr -> No roulette wheel
+    # r -> Roulette wheel
+    # a -> learning rate or alpha
+    # g -> discount factor or gamma
+    # e -> random exploration or epsilon
+    # d -> "dot" i.e: d5 = 0.5
+    # x -> the tested value. If we have ex_3vs1 it means we are testing two models with epsilon 0.3 vs epsilon 0.1
+
+    test_file = f'a3g6e3_qlvsa_200001_{"ttt" if selected_game == 0 else "c4"}'
 
     testing = Testing(number_games=n_games, roulette_wheel_p0=roulette_wheel_p0_testing,
                       roulette_wheel_p1=roulette_wheel_p1_testing, render_mode=render_mode_testing,
                       player0_model_filename=filename0, player1_model_filename=filename1,
-                      testing_filename=test_file, s_game=selected_game)
+                      testing_filename=test_file, s_game=selected_game, coinflip=enabled_coinflip)
     testing.testing()
